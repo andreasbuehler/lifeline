@@ -5,7 +5,7 @@ from flask_babel import _
 
 from app import db
 from app.auth import bp
-from app.auth.forms import LoginForm
+from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User
 
 
@@ -25,3 +25,19 @@ def login():
             next_page = url_for('main.index')
         return redirect(next_page)
     return render_template('login.html', title=_('Sign In'), form=form)
+
+
+@bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash(_('Congratulations, you are now a registered user!'))
+        return redirect(url_for('auth.login'))
+    return render_template('register.html', title=_('Register'),
+                           form=form)
